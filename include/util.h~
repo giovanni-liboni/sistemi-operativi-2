@@ -50,6 +50,15 @@ void dealloc_all(program_context *context);
  */
 void wait_and_stop(program_context *context,  double *result_main);
 /**
+ *@fn void coda_handler(program_context *context, double *result_main)
+ *@param context Context del programma main
+ *@param result_main Array dei risultati
+  *@return void
+ *@brief Gestisce la coda dei comandi, assegnando ogni comando al processo prestabilito. Se l'id del
+ * della thread è 0 allora assegnerà il comando alla prima thread libera.
+ */
+void coda_handler(program_context *context,  double *result_main);
+/**
  *@fn void creat_thread(program_context *context)
  *@param context Context del programma main
   *@return void

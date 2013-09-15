@@ -7,7 +7,6 @@
 
 #include "def.h"
 
-
 /**
  *\fn coda *construct_list(int id, int num1, int op, int num2, coda *next)
  *Costruttore per la coda

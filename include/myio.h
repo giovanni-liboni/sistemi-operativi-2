@@ -5,9 +5,8 @@
 #ifndef MY_IO_H_
 #define MY_IO_H_
 #include "def.h"
-#include "util.h"
 #include "list.h"
-#include "sem.h"
+#include "util.h"
 
 /**
  *@fn void print_err(char *s)
@@ -54,7 +53,7 @@ void logi(int num);
  */
 coda * readFile(char *file);
 /**
- *\fn void writeFile(double *data, coda *coda, char *file, int max)
+ *\fn void writeFile(int *data, coda *coda, char *file, int max)
  *\param *data Array dei risultati
  *\param *coda Coda con le operazioni
  *\param *file Nome del file
@@ -62,7 +61,7 @@ coda * readFile(char *file);
  *\return void
  *\brief Scrive su file i risultati accoppiati con le rispettive operazioni
  */
-void writeFile(double *data, coda *coda, char *file, int max);
+void writeFile(const double *data, coda *coda, char *file, int max);
 /**
  *\fn int readProc(char *file)
  *\param *file Nome del file

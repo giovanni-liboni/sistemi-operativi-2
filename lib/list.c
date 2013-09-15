@@ -26,7 +26,7 @@ void destruct_coda(coda *this)
 }
 int length_list(coda *this)
 {
-	int pos;
+  int pos;
   if (!this)
 	    return 0;
   pos = 1 + length_list(this->next);

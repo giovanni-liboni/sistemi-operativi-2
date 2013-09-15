@@ -1,43 +1,27 @@
 /**
- * @file def.h
- * @author Giovanni Liboni - VR363021
+ *@file def.h
+ *@author Giovanni Liboni - VR363021
  */
 #ifndef DEF_H_
 #define DEF_H_
 
+#include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <sys/types.h>
 #include <string.h>
 #include <stdlib.h>
 
-#include <sys/ipc.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/shm.h>
-#include <sys/sem.h>
-
-//#include "myio.h"
-///Numero dei semafori generali
-#define NUMSEMSYS 		10
-///Numero del semaforo MUTEX
-#define MUTEX 			1
-///Numero del semaforo MUTEXRES
-#define MUTEXRES 		2
-///Numero del semaforo SEMPROCFREE
-#define SEMPROCFREE 	3
-///Numero del semaforo SEMREADY
-#define SEMREADY 		4
-///Numero del semaforo SEMDATARECEIVE
-#define SEMDATARECEIVE 	5
-
-#ifndef IPC_RMID
-///Se non definito definisco IPC_RMID
-#define IPC_RMID		0
-#endif
 /**
- *\struct Coda
- *@brief Struttura della coda in cui vengono memorizzare le operazioni da svolgere
+ * \struct Coda
+ * @brief Struttura della coda in cui vengono memorizzare le operazioni da svolgere
+ * \param *next Puntatore alla successiva struttura nella coda
+ * \param op Intero che identifica l'operazioni da eseguire
+ * \param num1 Primo coefficiente dell'operazione
+ * \param num2 Secondo coefficiente dell'operazione
+ * \param id Identifica l'id del processo
+ * \param pos Indica la posizione dell'operazione
  */
 struct Coda{
 	/// Puntatore alla successiva struttura nella coda
@@ -59,6 +43,33 @@ struct Coda{
  */
 typedef struct Coda coda;
 /**
+ *\struct status_struct
+ *@brief Struttura per memorizzare i processi liberi e occupati
+ */
+typedef struct
+{
+	/// Viene memoriazzato lo stato del processo: -1 se è nuovo, 1 se è libero, 0 se è occupato
+	int *array;
+
+	/// Mutex associato all'array
+	pthread_mutex_t lock;
+}status_struct;
+/**
+ *@struct free_proc_sync
+ *@brief Struttura per memorizzare quanti processi sono liberi e quanti occupati
+ */
+typedef struct
+{
+	/// Mutex associato alla variabile cont
+	pthread_mutex_t lock;
+
+	/// Variabile condition
+	pthread_cond_t busy;
+
+	/// Numero dei processi occupati
+	int cont;
+}free_proc_sync;
+/**
  *@struct operazione
  *@brief Struttura per memorizzare l'operazione
  */
@@ -69,83 +80,73 @@ typedef struct
 	/// Secondo numero dell'operazione
 	int num2;
 	/// Risultato dell'operazione
-	int res;
+	double res;
 	/// Posizione dell'operazione
 	int pos;
 	/// Operazione da eseguire
 	char simbolo;
-	/// Carattere per terminare l'esecuzione del calcolo
-	char kill;
-
 }operazione;
 /**
- *@struct sync_id
- *@brief Struttura per memorizzare informazioni relative agli id per la sincronizzazione
+ *@struct thread_context
+ *@brief Context della singola thread. Sono presenti informazioni per la singola thread.
  */
 typedef struct
 {
-	/// Id dei semafori generali
-	int semid_sys;
-	/// Id dei semafori per sincronizzare la partenza dei processi
-	int semid_start;
-	/// Id dei semafori per sincronizzare la fine
-	int semid_finish;
-	/// Id del segmento di memoria condivisa per l'operazione
-	int shmid_operazione;
-	/// Id del segmento di memoria condivisa per lo stato e il risultato
-	int shmid_status;
-
-}sync_id;
-/**
- *@struct status_and_res_struct
- *@brief Struttura per memorizzare informazioni relative al risultato del comando e allo stato del processo.
- */
-typedef struct
-{
-	/// Posizione del risultato all'interno del file di configurazione
-	int pos;
-	/// Risultato del comando
-	int res;
-	/// Stato del processo
-	int status;
-
-}status_and_res_struct;
-/**
- *@struct slave_context
- *@brief Struttura privata di ogni processo per memorizzare le informazioni
- */
-typedef struct
-{
-	/// Memoria condivisa per il passaggio dei comandi
-	operazione *shm_operazione;
-	/// Memoria condivisa per il passaggio della struttura status_and_res_struct
-	status_and_res_struct *shm_status;
-	/// Struttura per memorizzare il singolo comando
-	operazione operazione_singola;
-	/// Struttura per memorizzare informazioni relative alla sincronizzazione
-	sync_id sync_id;
-	/// Id del processo
+	/// Id della thread
 	int id;
 
-}slave_context;
+	/// Contiene le informazioni sul comando
+	operazione operazione;
+
+	/// Status del processo
+	status_struct *status;
+
+	/// Mutex per l'avvio del processo
+	pthread_mutex_t start;
+
+	/// Mutex per la fine del calcolo del processo
+	pthread_mutex_t finish;
+
+	// Tiene traccia dei processi liberi
+	free_proc_sync *processi_liberi;
+
+	/// Indica se la thread deve terminare
+	char kill;
+
+	/// Se la thread è stata usata vale 1
+	int used ;
+
+}thread_context;
 /**
  *@struct program_context
- *@brief Context del programma principale
+ *@brief Context del programma. Sono memorizzate le informazioni del programma.
  */
 typedef struct
 {
+	/// Numero delle thread da usare
+	int NTHREAD;
+
+	/// Lunghezza coda
+	int lenght_coda;
+
+	/// Array dei risultati
+	int *result_main;
+
 	/// Coda dei comandi
 	coda *coda;
-	/// Lunghezza della coda
-	int lenght_coda;
-	/// Numero dei processi
-	int NPROC;
-	/// Struttura per memorizzare informazioni relative alla sincronizzazione
-	sync_id sync_id;
-	/// Memoria condivisa per il passaggio dei comandi
-	operazione *shm_operazione;
-	///  Memoria condivisa per il passaggio della struttura status_and_res_struct
-	status_and_res_struct *shm_status;
-}program_context;
 
+	/// Context delle singole thread
+	thread_context *thread;
+
+	/// Contiene l'id delle thread
+	pthread_t *threads;
+
+	/// Status dei processi
+	status_struct status;
+
+	/// Struttura per sincronizzarsi con i processi liberi e occupati
+	free_proc_sync processi_liberi;
+
+
+}program_context;
 #endif

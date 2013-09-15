@@ -1,11 +1,11 @@
 # Sources
-EXECUTABLE=main client.x
+EXECUTABLE=main
 
 # Config
 CC=gcc -Iinclude
-CFLAGS= -Wall -Wextra -c -ggdb
+CFLAGS= -Wall -c -ggdb
 LD=gcc
-LDFLAGS= -lm
+LDFLAGS= -lpthread
 
 # Target
 
@@ -14,7 +14,7 @@ all: $(EXECUTABLE)
 doxygen: Doxyfile
 	@doxygen
 
-run: main client.x cnf
+run: main cnf
 	@./main cnf
 	@cat out.txt
 
@@ -26,27 +26,19 @@ clean:
 	@script/resremove
 	@rm -rf doc out.txt
 
-main: list.o util.o sem.o shm.o myio.o main.c
+main: list.o util.o my_thread.o myio.o main.c
 	@echo Building $@
-	@$(CC) $(LDFLAGS) -o $@ $^
+	@$(CC) -o $@ $^ $(LDFLAGS) 
 
-client.x: list.o util.o sem.o shm.o myio.o client.c
-	@echo Building $@
-	@ $(CC) $(LDFLAGS) -o $@ $^
+my_thread.o: lib/my_thread.c include/my_thread.h
+	@echo $@
+	@ $(CC) $(CFLAGS) -o $@ $< 
+	
+list.o: lib/list.c include/list.h 
+	@echo $@
+	@ $(CC) $(CFLAGS) -o $@ $<
 	
 util.o: lib/util.c include/util.h
-	@echo $@
-	@ $(CC) $(CFLAGS) -o $@ $<
-	
-sem.o: lib/sem.c include/sem.h 
-	@echo $@
-	@ $(CC) $(CFLAGS) -o $@ $<
-	
-shm.o: lib/shm.c include/shm.h 
-	@echo $@
-	@ $(CC) $(CFLAGS) -o $@ $<
-
-list.o: lib/list.c include/list.h 
 	@echo $@
 	@ $(CC) $(CFLAGS) -o $@ $<
 	

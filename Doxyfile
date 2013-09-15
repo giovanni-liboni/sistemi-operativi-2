@@ -1,5 +1,5 @@
-PROJECT_NAME = "Calcolo parallelo - Secondo elaborato IPC"
-OUTPUT_DIRECTORY = ./doc 
+PROJECT_NAME = "Calcolo parallelo - Terzo elaborato IPC"
+OUTPUT_DIRECTORY = ./doc
 INPUT = .
 RECURSIVE = YES
 GENERATE_HTML = YES

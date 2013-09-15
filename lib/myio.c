@@ -167,7 +167,7 @@ int readProc(char *file)
 	close(fd);
 	return -1;
 }
-void writeFile(double *data, coda *contextCoda, char *file, int max)
+void writeFile(const double *data, coda *contextCoda, char *file, int max)
 {
 	// FILE DESCRIPTOR
 	int	fd;

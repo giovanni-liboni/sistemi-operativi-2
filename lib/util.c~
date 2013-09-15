@@ -80,6 +80,94 @@ void creat_thread(program_context *context)
 	// STAMPO
 	logsm("Thread pronte\n");
 }
+void coda_handler(program_context *context, double *result_main)
+{
+	int id;
+	int i;
+	int res= 0;
+	int pos;
+	char *str = (char *) malloc(sizeof(char) * 128);
+	logs("\n\t--- Inizio il calcolo ---\n\n");
+
+	while(context->coda)
+		{
+
+			if(context->coda->id)
+			{
+				// SALVO IN id IL VALORE REALE DELL'ID
+				id = context->coda->id - 1;
+
+				//-------------------------------------------------------------
+				//	ASPETTO CHE IL PROCESSO SIA LIBERO
+				//-------------------------------------------------------------
+				lock_mutex(&context->thread[id].finish);
+
+				//-------------------------------------------------------------
+				//	RECUPERO IL PRECEDENTE RISULTATO E LO MEMORIZZO NELL'ARRAY
+				//	DEI RISULTATI
+				//-------------------------------------------------------------
+				res = context->thread[id].operazione.res;
+				pos = context->thread[id].operazione.pos;
+				result_main[ pos ] =  res;
+
+				//-------------------------------------------------------------
+				//	CARICO IN MEMORIA I DATI DA PASSARE ALLA THREAD
+				//-------------------------------------------------------------
+				context->thread[id].operazione.num1 = context->coda->num1;
+				context->thread[id].operazione.simbolo = context->coda->op;
+				context->thread[id].operazione.num2 = context->coda->num2;
+				context->thread[id].operazione.pos = context->coda->pos - 1;
+				context->thread[id].kill = 'N';
+
+				// STAMPO LE INFORMAZIONI RELATIVE AL COMANDO PASSATO
+				sprintf(str, "Comando.........%d\n", context->lenght_coda - context->coda->pos + 1);
+				logsm(str);
+
+				sprintf(str, "Processo........%d\n", context->coda->id);
+				logsm(str);
+
+				sprintf(str, "Operazione......%d %c %d\n",context->coda->num1 , context->coda->op ,context->coda->num2);
+				logsm(str);
+
+				//-------------------------------------------------------------
+				//	SBLOCCO LA THREAD
+				//-------------------------------------------------------------
+				unlock_mutex(&context->thread[id].start);
+
+				//-------------------------------------------------------------
+				//	PASSO AL PROSSIMO COMANDO
+				//-------------------------------------------------------------
+				context->coda = context->coda->next;
+			}
+			else
+			{
+				// CONTROLLO FINO A QUANDO NON SI È LIBERATO UN PROCESSO
+				while( !context->coda->id )
+				{
+				logsm(" --- Controllo processi liberi ---\n");
+
+					// CONTROLLO SE SONO PRESENTI THREAD LIBERE
+					for( i = 1 ; i <= context->NTHREAD ; i++)
+					{
+						if( context->status.array[i - 1] != 0 )
+						{
+							context->coda->id = i;
+							break;
+						}
+					}
+					// SE NON SONO PRESENTI THREAD LIBERE ASPETTO
+					if( !context->coda->id)
+					{
+						//-------------------------------------------------------------
+						//	ASPETTO CHE UNA THREAD SI LIBERI
+						//-------------------------------------------------------------
+						thread_wait_for_ready(&context->processi_liberi, context->NTHREAD);
+
+					}
+				}
+			}
+	}
+}
 void wait_and_stop(program_context *context,  double *result_main)
 {
 	int i;
