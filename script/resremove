@@ -1,0 +1,5 @@
+for n in `ipcs | grep 666 | cut -d" " -f2`
+do 
+	ipcrm -s $n
+	ipcrm -m $n
+done

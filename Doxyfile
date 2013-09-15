@@ -1,0 +1,6 @@
+PROJECT_NAME = "Calcolo parallelo - Secondo elaborato IPC"
+OUTPUT_DIRECTORY = ./doc 
+INPUT = .
+RECURSIVE = YES
+GENERATE_HTML = YES
+GENERATE_LATEX = NO
